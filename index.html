@@ -260,6 +260,9 @@
                 </div>
                 <div class="modal-body">
                     <div class="small text-muted mb-2" id="resetPisauLabel">-</div>
+                    <label class="form-label small fw-bold">Kode Admin (wajib)</label>
+                    <input type="password" inputmode="numeric" class="form-control form-control-sm mb-1" id="resetPisauAdminPin" placeholder="Masukkan kode Admin" autocomplete="off">
+                    <div class="text-danger small mb-2 d-none" id="resetPisauPinError">Kode Admin wajib diisi.</div>
                     <label class="form-label small fw-bold">Catatan Reset (wajib)</label>
                     <textarea class="form-control form-control-sm" id="resetPisauCatatan" rows="3" placeholder="Contoh: Ganti pisau baru SN-1234, pisau lama sudah aus"></textarea>
                     <div class="text-danger small mt-1 d-none" id="resetPisauError">Catatan wajib diisi.</div>
@@ -277,7 +280,7 @@
     <!-- QR Scanner Library dihapus -- versi Leader tidak butuh scan QR/Input Data -->
 
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyDqs9u-4rMnE8vCN-4le7naWOHXbwyCOQjcIxr4YSKMaq6Z0WhzmvefYu6Ji3mxPud/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzz7bYvXI6mXU_6p-ujo5doCHU0Qvv-tRHrA9rQas-zC9JO4mmSr9DbLjet8WhbgvKHCA/exec';
 
         // Versi Leader: TANPA LOGIN. sessionLine dibiarkan string kosong -- cuma dipakai sebagai
         // default awal pemilihan departemen di Progress Planning (lihat initProgressPlanning), aman
@@ -750,20 +753,35 @@
             resetPisauTarget = { id_pisau: idPisau, nama_pisau: namaPisau, line: line };
             document.getElementById('resetPisauLabel').innerText = `${line} - ${namaPisau}`;
             document.getElementById('resetPisauCatatan').value = '';
+            document.getElementById('resetPisauAdminPin').value = '';
             document.getElementById('resetPisauError').classList.add('d-none');
+            document.getElementById('resetPisauPinError').classList.add('d-none');
             new bootstrap.Modal(document.getElementById('resetPisauModal')).show();
         }
 
         function submitResetPisau() {
             if (!resetPisauTarget) return;
             const catatan = document.getElementById('resetPisauCatatan').value.trim();
+            const adminPin = document.getElementById('resetPisauAdminPin').value.trim();
+
+            let hasError = false;
+            if (!adminPin) {
+                document.getElementById('resetPisauPinError').classList.remove('d-none');
+                hasError = true;
+            } else {
+                document.getElementById('resetPisauPinError').classList.add('d-none');
+            }
             if (!catatan) {
                 document.getElementById('resetPisauError').classList.remove('d-none');
-                return;
+                hasError = true;
+            } else {
+                document.getElementById('resetPisauError').classList.add('d-none');
             }
+            if (hasError) return;
+
             fetch(GAS_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'resetKontrolPisau', id_pisau: resetPisauTarget.id_pisau, catatan: catatan })
+                body: JSON.stringify({ action: 'resetKontrolPisau', id_pisau: resetPisauTarget.id_pisau, catatan: catatan, admin_pin: adminPin })
             })
             .then(res => res.text())
             .then(text => {
